@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora IRO — Banco Plata</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#F4F3EF;color:#1C1C1C;min-height:100vh;padding:24px 16px}
+.page{max-width:780px;margin:0 auto}
+.top-bar{background:#fff;border:0.5px solid #E0DDD8;border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px}
+.top-icon{width:44px;height:44px;border-radius:8px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px}
+.top-title{font-size:16px;font-weight:700;color:#1B3A6B;margin:0 0 2px}
+.top-sub{font-size:12px;color:#5F5E5A;margin:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.field-card{background:#fff;border:0.5px solid #E0DDD8;border-radius:12px;padding:14px 16px}
+.field-card.full{grid-column:1/-1}
+.field-label{font-size:12px;font-weight:700;color:#5F5E5A;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.field-weight{font-size:10px;color:#888780;margin-left:auto;font-weight:400}
+input[type=text],select{width:100%;font-size:13px;padding:8px 10px;border-radius:8px;border:0.5px solid #B4B2A9;background:#fff;color:#1C1C1C;outline:none;-webkit-appearance:none}
+input[type=text]:focus,select:focus{border-color:#185FA5;box-shadow:0 0 0 3px #185FA520}
+.seg-group{display:flex;gap:6px;flex-wrap:wrap}
+.seg{padding:6px 12px;border-radius:8px;border:0.5px solid #D3D1C7;background:#fff;color:#5F5E5A;font-size:12px;cursor:pointer;transition:all .12s;user-select:none}
+.seg:hover{background:#F1EFE8}
+.seg.active-green{background:#EAF3DE;border-color:#3B6D11;color:#27500A;font-weight:700}
+.seg.active-amber{background:#FAEEDA;border-color:#854F0B;color:#633806;font-weight:700}
+.seg.active-red{background:#FCEBEB;border-color:#A32D2D;color:#791F1F;font-weight:700}
+.result-card{background:#fff;border:0.5px solid #E0DDD8;border-radius:12px;padding:20px;margin-bottom:12px}
+.iro-display{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.iro-number{font-size:56px;font-weight:700;line-height:1;min-width:80px}
+.iro-detail{flex:1;min-width:160px}
+.iro-lbl{font-size:11px;color:#888780;margin-bottom:4px}
+.iro-nivel{font-size:17px;font-weight:700;margin-bottom:6px}
+.iro-desc{font-size:12px;color:#5F5E5A;line-height:1.5}
+.progress-bar{height:8px;border-radius:4px;background:#F1EFE8;overflow:hidden;margin-top:14px}
+.progress-fill{height:100%;border-radius:4px;transition:width .35s,background .35s}
+.dim-breakdown{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;padding-top:16px;border-top:0.5px solid #E0DDD8}
+@media(max-width:420px){.dim-breakdown{grid-template-columns:repeat(3,1fr)}}
+.dim-item{text-align:center;padding:10px 6px;border-radius:8px;background:#F7F6F3}
+.dim-name{font-size:10px;color:#888780;margin-bottom:4px;line-height:1.2}
+.dim-score{font-size:22px;font-weight:700}
+.dim-max{font-size:10px;color:#B4B2A9}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.btn{font-size:13px;padding:9px 16px;border-radius:8px;border:0.5px solid #D3D1C7;background:#fff;color:#1C1C1C;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#F1EFE8}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:#1B3A6B;border-color:#1B3A6B;color:#fff}
+.btn.primary:hover{background:#142D53}
+.btn.danger{background:#FCEBEB;border-color:#F09595;color:#791F1F}
+.btn.danger:hover{background:#F7C1C1}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1B3A6B;color:#fff;font-size:13px;font-weight:500;padding:12px 20px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;white-space:nowrap}
+.toast.show{opacity:1}
+.toast.error{background:#A32D2D}
+.toast.success{background:#3B6D11}
+.history-section{background:#fff;border:0.5px solid #E0DDD8;border-radius:12px;padding:16px 20px;margin-bottom:16px}
+.hist-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.hist-title{font-size:12px;font-weight:700;color:#5F5E5A;text-transform:uppercase;letter-spacing:.05em}
+.hist-count{font-size:11px;color:#888780}
+.hist-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;background:#F7F6F3;margin-bottom:6px;font-size:12px;cursor:pointer;border:0.5px solid transparent;transition:border-color .1s}
+.hist-row:hover{border-color:#B4B2A9}
+.hist-row:last-child{margin-bottom:0}
+.hist-name{flex:1;font-weight:700;color:#1C1C1C;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-site{font-size:10px;color:#888780;white-space:nowrap}
+.hist-nivel{font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;white-space:nowrap}
+.hist-iro{font-size:15px;font-weight:700;min-width:32px;text-align:right}
+.hist-del{font-size:11px;color:#B4B2A9;padding:2px 6px;cursor:pointer;border-radius:4px}
+.hist-del:hover{color:#A32D2D;background:#FCEBEB}
+.sync-badge{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:700}
+.synced{background:#EAF3DE;color:#27500A}
+.pending{background:#FAEEDA;color:#633806}
+.legend-card{background:#F7F6F3;border-radius:8px;padding:14px 16px;margin-bottom:16px}
+.legend-title{font-size:11px;font-weight:700;color:#5F5E5A;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.legend-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media(max-width:420px){.legend-grid{grid-template-columns:1fr}}
+.legend-item{padding:8px 10px;border-radius:6px;font-size:11px}
+.li-green{background:#EAF3DE;color:#27500A}
+.li-amber{background:#FAEEDA;color:#633806}
+.li-red{background:#FCEBEB;color:#791F1F}
+.li-label{font-weight:700;margin-bottom:2px}
+.alert-banner{background:#FAEEDA;border-left:4px solid #854F0B;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#633806;display:none}
+.footer{text-align:center;font-size:11px;color:#888780;padding-top:16px;border-top:0.5px solid #E0DDD8;margin-top:8px}
+.empty-state{font-size:12px;color:#B4B2A9;padding:12px 0;text-align:center}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="top-bar">
+    <div class="top-icon">🧮</div>
+    <div>
+      <p class="top-title">Calculadora de IRO — Banco Plata</p>
+      <p class="top-sub">Índice de Riesgo Operativo · 5 dimensiones · escala 0–7 · Respuestas → Google Sheets</p>
+    </div>
+  </div>
+
+  <div id="alert-banner" class="alert-banner"></div>
+
+  <div class="grid">
+    <div class="field-card full">
+      <div class="field-label">👤 Nombre del candidato</div>
+      <input type="text" id="nombre" placeholder="Ej. María García López" oninput="calc()">
+    </div>
+
+    <div class="field-card">
+      <div class="field-label">📍 D1 · Traslado al site <span class="field-weight">Peso 25%</span></div>
+      <div class="seg-group" id="d1">
+        <span class="seg active-green" data-val="0" onclick="pick('d1',this)">≤30 min</span>
+        <span class="seg" data-val="1" onclick="pick('d1',this)">31–45 min</span>
+        <span class="seg" data-val="2" onclick="pick('d1',this)">46–70 min</span>
+        <span class="seg" data-val="3" onclick="pick('d1',this)">&gt;70 min</span>
+      </div>
+    </div>
+
+    <div class="field-card">
+      <div class="field-label">🎧 D2 · Experiencia CC <span class="field-weight">Peso 25%</span></div>
+      <div class="seg-group" id="d2">
+        <span class="seg active-green" data-val="0" onclick="pick('d2',this)">CC ventas directo</span>
+        <span class="seg" data-val="1" onclick="pick('d2',this)">CC atención / análogo</span>
+        <span class="seg" data-val="2" onclick="pick('d2',this)">Sin experiencia CC</span>
+      </div>
+    </div>
+
+    <div class="field-card">
+      <div class="field-label">🎙 D3 · Calidad de roleplay <span class="field-weight">Peso 20%</span></div>
+      <div class="seg-group" id="d3">
+        <span class="seg active-green" data-val="0" onclick="pick('d3',this)">Muy bueno</span>
+        <span class="seg active-green" data-val="0" onclick="pick('d3',this)">Bueno / cerró</span>
+        <span class="seg" data-val="1" onclick="pick('d3',this)">Básico / aceptable</span>
+        <span class="seg" data-val="2" onclick="pick('d3',this)">No cerró venta</span>
+      </div>
+    </div>
+
+    <div class="field-card">
+      <div class="field-label">💰 D4 · Expectativa salarial <span class="field-weight">Peso 15%</span></div>
+      <div class="seg-group" id="d4">
+        <span class="seg active-green" data-val="0" onclick="pick('d4',this)">≤ $13k/mes</span>
+        <span class="seg" data-val="1" onclick="pick('d4',this)">$14k – $17k/mes</span>
+        <span class="seg" data-val="2" onclick="pick('d4',this)">&gt; $17k/mes</span>
+      </div>
+    </div>
+
+    <div class="field-card">
+      <div class="field-label">📄 D5 · Documentación <span class="field-weight">Peso 15%</span></div>
+      <div class="seg-group" id="d5">
+        <span class="seg active-green" data-val="0" onclick="pick('d5',this)">Completa</span>
+        <span class="seg" data-val="1" onclick="pick('d5',this)">1 doc pendiente</span>
+        <span class="seg" data-val="2" onclick="pick('d5',this)">Bloqueada</span>
+      </div>
+    </div>
+
+    <div class="field-card">
+      <div class="field-label">🏢 Site</div>
+      <select id="site">
+        <option value="">Seleccionar site</option>
+        <option>Puebla — Barrio Analco</option>
+        <option>CDMX — Viaducto</option>
+        <option>CDMX — Del Valle</option>
+        <option>Otro</option>
+      </select>
+    </div>
+
+    <div class="field-card">
+      <div class="field-label">🧑‍💼 Reclutadora</div>
+      <select id="reclutadora">
+        <option value="">Seleccionar reclutadora</option>
+        <option>Grecia Morgado</option>
+        <option>Vanessa Gámez</option>
+        <option>Cynthia Martínez</option>
+        <option>Martin Diego</option>
+        <option>Martha</option>
+        <option>Alejandra</option>
+        <option>Antonia</option>
+        <option>Otra</option>
+      </select>
+    </div>
+
+    <div class="field-card full">
+      <div class="field-label">📝 Notas adicionales</div>
+      <input type="text" id="notas" placeholder="Ej. Traslado desde Tlaxcala, SAT pendiente, bono corregido...">
+    </div>
+  </div>
+
+  <div class="result-card">
+    <div class="iro-display">
+      <div class="iro-number" id="iro-num" style="color:#3B6D11">0.0</div>
+      <div class="iro-detail">
+        <div class="iro-lbl">IRO estimado · escala 0–7</div>
+        <div class="iro-nivel" id="iro-nivel" style="color:#3B6D11">Riesgo bajo — incorporar</div>
+        <div class="iro-desc" id="iro-desc">Selecciona las opciones para calcular el IRO del candidato.</div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%;background:#3B6D11"></div></div>
+    <div class="dim-breakdown">
+      <div class="dim-item"><div class="dim-name">D1<br>Traslado</div><div class="dim-score" id="s1" style="color:#3B6D11">0</div><div class="dim-max">/ 3</div></div>
+      <div class="dim-item"><div class="dim-name">D2<br>Exp. CC</div><div class="dim-score" id="s2" style="color:#3B6D11">0</div><div class="dim-max">/ 2</div></div>
+      <div class="dim-item"><div class="dim-name">D3<br>Roleplay</div><div class="dim-score" id="s3" style="color:#3B6D11">0</div><div class="dim-max">/ 2</div></div>
+      <div class="dim-item"><div class="dim-name">D4<br>Exp. sal.</div><div class="dim-score" id="s4" style="color:#3B6D11">0</div><div class="dim-max">/ 2</div></div>
+      <div class="dim-item"><div class="dim-name">D5<br>Docs</div><div class="dim-score" id="s5" style="color:#3B6D11">0</div><div class="dim-max">/ 2</div></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" id="btn-guardar" onclick="guardar()">💾 Guardar y enviar a Sheets</button>
+    <button class="btn" onclick="limpiar()">🔄 Limpiar campos</button>
+    <button class="btn" onclick="exportarCSV()">⬇ Exportar CSV</button>
+    <button class="btn danger" onclick="borrarTodo()">🗑 Borrar historial local</button>
+  </div>
+
+  <div class="legend-card">
+    <div class="legend-title">Referencia de niveles IRO</div>
+    <div class="legend-grid">
+      <div class="legend-item li-green"><div class="li-label">Bajo · 0.0 – 2.5</div><div>Incorporar sin condiciones</div></div>
+      <div class="legend-item li-amber"><div class="li-label">Medio · 2.6 – 4.5</div><div>Seguimiento activo requerido</div></div>
+      <div class="legend-item li-red"><div class="li-label">Alto · 4.6 – 7.0</div><div>Evaluar antes de avanzar</div></div>
+    </div>
+  </div>
+
+  <div class="history-section" id="history-section" style="display:none">
+    <div class="hist-header">
+      <div class="hist-title">Candidatos evaluados (local)</div>
+      <div class="hist-count" id="hist-count">0 registros</div>
+    </div>
+    <div id="hist-list"><div class="empty-state">Ningún candidato guardado aún.</div></div>
+  </div>
+
+  <div class="footer">
+    Banco Plata · Calculadora IRO v2.0 · Conectada a Google Sheets · Junio 2026
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/a/macros/dif.tech/s/AKfycbw9PxcY_Z9e4zzY_24UeBqbBs3pm3lTaGlol5Wn8-Wi-xnjfMTScP6CAazT3o3h1slh/exec';
+
+const scores = {d1:0,d2:0,d3:0,d4:0,d5:0};
+const W   = {d1:.25,d2:.25,d3:.20,d4:.15,d5:.15};
+const MAX = {d1:3,d2:2,d3:2,d4:2,d5:2};
+const MAX_W = Object.keys(W).reduce((a,k)=>a+W[k]*MAX[k],0);
+let histData = JSON.parse(localStorage.getItem('iro_hist_v2')||'[]');
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.className='toast', 3000);
+}
+
+function pick(dim, el) {
+  document.getElementById(dim).querySelectorAll('.seg').forEach(s=>{
+    s.classList.remove('active-green','active-amber','active-red');
+  });
+  const v = parseInt(el.dataset.val);
+  el.classList.add(v===0?'active-green':v===1?'active-amber':'active-red');
+  scores[dim] = v;
+  calc();
+}
+
+function iroVal() {
+  const raw = Object.keys(scores).reduce((a,k)=>a+scores[k]*W[k],0);
+  return parseFloat((raw/MAX_W*7).toFixed(1));
+}
+
+function meta(iro) {
+  if(iro<=2.5) return {color:'#3B6D11',nivel:'Riesgo bajo — incorporar',
+    desc:'Perfil sólido. Incorporación recomendada sin condiciones adicionales.'};
+  if(iro<=4.5) return {color:'#854F0B',nivel:'Riesgo medio — seguimiento activo',
+    desc:'Incorporable con monitoreo. Verificar factores de riesgo antes del primer día.'};
+  return {color:'#A32D2D',nivel:'Riesgo alto — evaluar con cuidado',
+    desc:'Múltiples factores de riesgo. Considerar acciones correctivas o diferir ingreso.'};
+}
+
+function dimColor(v,max){
+  if(v===0)return'#3B6D11';
+  if(v/max<=.5)return'#854F0B';
+  return'#A32D2D';
+}
+
+function calc() {
+  const iro=iroVal(), m=meta(iro);
+  document.getElementById('iro-num').textContent=iro.toFixed(1);
+  document.getElementById('iro-num').style.color=m.color;
+  document.getElementById('iro-nivel').textContent=m.nivel;
+  document.getElementById('iro-nivel').style.color=m.color;
+  document.getElementById('iro-desc').textContent=m.desc;
+  document.getElementById('prog').style.width=Math.round(iro/7*100)+'%';
+  document.getElementById('prog').style.background=m.color;
+  ['d1','d2','d3','d4','d5'].forEach((k,i)=>{
+    const el=document.getElementById('s'+(i+1));
+    el.textContent=scores[k];
+    el.style.color=dimColor(scores[k],MAX[k]);
+  });
+  const ban=document.getElementById('alert-banner');
+  if(iro>=5){
+    ban.style.display='block';
+    ban.textContent='⚠ IRO alto detectado ('+iro.toFixed(1)+'): revisar traslado, experiencia CC y documentación antes de avanzar.';
+  } else {
+    ban.style.display='none';
+  }
+}
+
+async function guardar() {
+  const nombre = document.getElementById('nombre').value.trim();
+  if(!nombre){ showToast('Escribe el nombre del candidato primero.','error'); return; }
+
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+
+  const iro   = iroVal();
+  const m     = meta(iro);
+  const nivel = iro<=2.5?'Bajo':iro<=4.5?'Medio':'Alto';
+  const payload = {
+    nombre,
+    site:        document.getElementById('site').value||'—',
+    reclutadora: document.getElementById('reclutadora').value||'—',
+    notas:       document.getElementById('notas').value.trim()||'',
+    iro:         iro.toFixed(1),
+    nivel,
+    d1: scores.d1, d2: scores.d2, d3: scores.d3, d4: scores.d4, d5: scores.d5,
+    fecha: new Date().toLocaleString('es-MX')
+  };
+
+  let synced = false;
+  try {
+    const params = new URLSearchParams({data: JSON.stringify(payload)});
+    const res = await fetch(SCRIPT_URL + '?' + params.toString(), {
+      method: 'GET'
+    });
+    const json = await res.json();
+    synced = json.status === 'ok';
+    if(synced) showToast('✓ Guardado en Google Sheets', 'success');
+    else showToast('⚠ Se guardó local, pero Sheets devolvió error.', 'error');
+  } catch(e) {
+    showToast('Sin conexión — guardado solo en local.', 'error');
+  }
+
+  histData.unshift({...payload, synced, color: m.color});
+  localStorage.setItem('iro_hist_v2', JSON.stringify(histData));
+  renderHist();
+  document.getElementById('history-section').style.display = 'block';
+
+  btn.disabled = false;
+  btn.textContent = '💾 Guardar y enviar a Sheets';
+}
+
+function renderHist() {
+  document.getElementById('hist-count').textContent = histData.length+' registro'+(histData.length!==1?'s':'');
+  if(!histData.length){
+    document.getElementById('hist-list').innerHTML='<div class="empty-state">Ningún candidato guardado aún.</div>';
+    return;
+  }
+  document.getElementById('hist-list').innerHTML = histData.map((h,i)=>{
+    const badge = h.nivel==='Bajo'?'background:#EAF3DE;color:#27500A':h.nivel==='Medio'?'background:#FAEEDA;color:#633806':'background:#FCEBEB;color:#791F1F';
+    const sync  = h.synced
+      ? '<span class="sync-badge synced">✓ Sheets</span>'
+      : '<span class="sync-badge pending">Local</span>';
+    return`<div class="hist-row" onclick="cargar(${i})">
+      <span class="hist-name">${h.nombre}</span>
+      <span class="hist-site">${h.reclutadora} · ${h.fecha}</span>
+      ${sync}
+      <span class="hist-nivel" style="${badge}">${h.nivel}</span>
+      <span class="hist-iro" style="color:${h.color}">${h.iro}</span>
+      <span class="hist-del" onclick="event.stopPropagation();borrar(${i})" title="Eliminar">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function cargar(i) {
+  const h = histData[i];
+  document.getElementById('nombre').value = h.nombre;
+  document.getElementById('notas').value  = h.notas||'';
+  ['d1','d2','d3','d4','d5'].forEach(dim=>{
+    const grp = document.getElementById(dim);
+    grp.querySelectorAll('.seg').forEach(s=>s.classList.remove('active-green','active-amber','active-red'));
+    const v = h[dim];
+    scores[dim] = v;
+    const segs = [...grp.querySelectorAll('.seg')];
+    const match = segs.filter(s=>parseInt(s.dataset.val)===v);
+    if(match.length){
+      const el = match[match.length-1];
+      el.classList.add(v===0?'active-green':v===1?'active-amber':'active-red');
+    }
+  });
+  calc();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function borrar(i) {
+  histData.splice(i,1);
+  localStorage.setItem('iro_hist_v2', JSON.stringify(histData));
+  renderHist();
+  if(!histData.length) document.getElementById('history-section').style.display='none';
+}
+
+function borrarTodo() {
+  if(!confirm('¿Borrar todo el historial local? Los datos en Google Sheets no se eliminan.')) return;
+  histData=[];
+  localStorage.setItem('iro_hist_v2','[]');
+  document.getElementById('history-section').style.display='none';
+}
+
+function limpiar() {
+  document.getElementById('nombre').value='';
+  document.getElementById('notas').value='';
+  document.getElementById('site').value='';
+  document.getElementById('reclutadora').value='';
+  ['d1','d2','d3','d4','d5'].forEach(dim=>{
+    scores[dim]=0;
+    const grp=document.getElementById(dim);
+    grp.querySelectorAll('.seg').forEach(s=>s.classList.remove('active-green','active-amber','active-red'));
+    grp.querySelector('.seg').classList.add('active-green');
+  });
+  calc();
+}
+
+function exportarCSV() {
+  if(!histData.length){alert('No hay candidatos guardados para exportar.');return;}
+  const header='Nombre,Site,Reclutadora,IRO,Nivel,D1,D2,D3,D4,D5,Fecha,Notas,Sincronizado';
+  const rows = histData.map(h=>[
+    '"'+h.nombre+'"','"'+h.site+'"','"'+h.reclutadora+'"',
+    h.iro,'"'+h.nivel+'"',
+    h.d1,h.d2,h.d3,h.d4,h.d5,
+    '"'+h.fecha+'"','"'+(h.notas||'')+'"',
+    h.synced?'Sí':'No'
+  ].join(','));
+  const csv = header+'\n'+rows.join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='IRO_BancoPlata_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+if(histData.length){renderHist();document.getElementById('history-section').style.display='block';}
+calc();
+</script>
+</body>
+</html>
