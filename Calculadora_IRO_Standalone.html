@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora IRO — Banco Plata</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#F4F3EF;color:#1C1C1C;min-height:100vh;padding:24px 16px}
+.page{max-width:900px;margin:0 auto}
+
+/* HEADER */
+.top-bar{background:#1B3A6B;border-radius:12px;padding:16px 22px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.top-left{display:flex;align-items:center;gap:14px}
+.top-icon{width:44px;height:44px;border-radius:8px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.top-title{font-size:16px;font-weight:700;color:#fff;margin:0 0 2px}
+.top-sub{font-size:12px;color:#8FA8C8;margin:0}
+.tab-bar{display:flex;gap:4px}
+.tab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:rgba(255,255,255,0.12);color:#8FA8C8;transition:all .15s}
+.tab.active{background:#fff;color:#1B3A6B}
+
+/* PANELS */
+.panel{display:none}
+.panel.active{display:block}
+
+/* FORM */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.field-card{background:#fff;border:0.5px solid #E0DDD8;border-radius:12px;padding:14px 16px}
+.field-card.full{grid-column:1/-1}
+.field-label{font-size:12px;font-weight:700;color:#5F5E5A;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.field-weight{font-size:10px;color:#888780;margin-left:auto;font-weight:400}
+input[type=text],select{width:100%;font-size:13px;padding:8px 10px;border-radius:8px;border:0.5px solid #B4B2A9;background:#fff;color:#1C1C1C;outline:none;-webkit-appearance:none}
+input[type=text]:focus,select:focus{border-color:#185FA5;box-shadow:0 0 0 3px #185FA520}
+.seg-group{display:flex;gap:6px;flex-wrap:wrap}
+.seg{padding:6px 12px;border-radius:8px;border:0.5px solid #D3D1C7;background:#fff;color:#5F5E5A;font-size:12px;cursor:pointer;transition:all .12s;user-select:none}
+.seg:hover{background:#F1EFE8}
+.seg.active-green{background:#EAF3DE;border-color:#3B6D11;color:#27500A;font-weight:700}
+.seg.active-amber{background:#FAEEDA;border-color:#854F0B;color:#633806;font-weight:700}
+.seg.active-red{background:#FCEBEB;border-color:#A32D2D;color:#791F1F;font-weight:700}
+
+/* RESULT */
+.result-card{background:#fff;border:0.5px solid #E0DDD8;border-radius:12px;padding:20px;margin-bottom:12px}
+.iro-display{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.iro-number{font-size:56px;font-weight:700;line-height:1;min-width:80px}
+.iro-detail{flex:1;min-width:160px}
+.iro-lbl{font-size:11px;color:#888780;margin-bottom:4px}
+.iro-nivel{font-size:17px;font-weight:700;margin-bottom:6px}
+.iro-desc{font-size:12px;color:#5F5E5A;line-height:1.5}
+.progress-bar{height:8px;border-radius:4px;background:#F1EFE8;overflow:hidden;margin-top:14px}
+.progress-fill{height:100%;border-radius:4px;transition:width .35s,background .35s}
+.dim-breakdown{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;padding-top:16px;border-top:0.5px solid #E0DDD8}
+@media(max-width:420px){.dim-breakdown{grid-template-columns:repeat(3,1fr)}}
+.dim-item{text-align:center;padding:10px 6px;border-radius:8px;background:#F7F6F3}
+.dim-name{font-size:10px;color:#888780;margin-bottom:4px;line-height:1.2}
+.dim-score{font-size:22px;font-weight:700}
+.dim-max{font-size:10px;color:#B4B2A9}
+
+/* BUTTONS */
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.btn{font-size:13px;padding:9px 16px;border-radius:8px;border:0.5px solid #D3D1C7;background:#fff;color:#1C1C1C;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#F1EFE8}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:#1B3A6B;border-color:#1B3A6B;color:#fff}
+.btn.primary:hover{background:#142D53}
+.btn.success{background:#3B6D11;border-color:#3B6D11;color:#fff}
+.btn.success:hover{background:#2A5009}
+.btn.danger{background:#FCEBEB;border-color:#F09595;color:#791F1F}
+
+/* ALERT */
+.alert-banner{background:#FAEEDA;border-left:4px solid #854F0B;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#633806;display:none}
+
+/* LEGEND */
+.legend-card{background:#F7F6F3;border-radius:8px;padding:14px 16px;margin-bottom:16px}
+.legend-title{font-size:11px;font-weight:700;color:#5F5E5A;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.legend-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media(max-width:420px){.legend-grid{grid-template-columns:1fr}}
+.li{padding:8px 10px;border-radius:6px;font-size:11px}
+.li-green{background:#EAF3DE;color:#27500A}
+.li-amber{background:#FAEEDA;color:#633806}
+.li-red{background:#FCEBEB;color:#791F1F}
+.li-label{font-weight:700;margin-bottom:2px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1B3A6B;color:#fff;font-size:13px;font-weight:500;padding:12px 20px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;white-space:nowrap}
+.toast.show{opacity:1}
+.toast.success{background:#3B6D11}
+.toast.error{background:#A32D2D}
+
+/* HISTORIAL TABLE */
+.card{background:#fff;border:0.5px solid #E0DDD8;border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.card-title{font-size:14px;font-weight:700;color:#1B3A6B}
+.card-count{font-size:12px;color:#888780}
+.tbl-actions{display:flex;gap:8px;flex-wrap:wrap}
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:0.5px solid #E0DDD8}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
+thead th{background:#1B3A6B;color:#fff;font-weight:600;text-align:left;padding:10px 12px;white-space:nowrap;font-size:11px}
+tbody tr:nth-child(even) td{background:#F7F6F3}
+tbody tr:hover td{background:#EEF4FB;cursor:pointer}
+td{padding:9px 12px;border-bottom:0.5px solid #E0DDD8;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap}
+.b-green{background:#EAF3DE;color:#27500A}
+.b-amber{background:#FAEEDA;color:#633806}
+.b-red{background:#FCEBEB;color:#791F1F}
+.b-gray{background:#F1EFE8;color:#5F5E5A}
+.iro-cell{font-weight:700;font-size:14px}
+.del-btn{color:#B4B2A9;font-size:11px;padding:2px 6px;cursor:pointer;border-radius:4px;border:none;background:none}
+.del-btn:hover{color:#A32D2D;background:#FCEBEB}
+.empty-state{text-align:center;padding:32px;color:#B4B2A9;font-size:13px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.stat-card{background:#fff;border:0.5px solid #E0DDD8;border-radius:10px;padding:14px 16px;text-align:center}
+.stat-val{font-size:28px;font-weight:700;margin-bottom:4px}
+.stat-label{font-size:11px;color:#888780}
+
+/* SEARCH */
+.search-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.search-bar input{flex:1;min-width:160px;font-size:13px;padding:8px 12px;border-radius:8px;border:0.5px solid #B4B2A9;background:#fff;outline:none}
+.search-bar select{font-size:12px;padding:8px 10px;border-radius:8px;border:0.5px solid #B4B2A9;background:#fff;outline:none}
+
+.footer{text-align:center;font-size:11px;color:#888780;padding-top:16px;border-top:0.5px solid #E0DDD8;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-icon">🧮</div>
+      <div>
+        <p class="top-title">Calculadora IRO — Banco Plata</p>
+        <p class="top-sub">Índice de Riesgo Operativo · 5 dimensiones · escala 0–7 · Datos guardados localmente</p>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <button class="tab active" onclick="switchTab('calc')">📋 Calcular</button>
+      <button class="tab" onclick="switchTab('hist')">📊 Historial</button>
+    </div>
+  </div>
+
+  <!-- PANEL CALCULAR -->
+  <div class="panel active" id="panel-calc">
+
+    <div id="alert-banner" class="alert-banner"></div>
+
+    <div class="grid">
+      <div class="field-card full">
+        <div class="field-label">👤 Nombre del candidato</div>
+        <input type="text" id="nombre" placeholder="Ej. María García López" oninput="calc()">
+      </div>
+      <div class="field-card">
+        <div class="field-label">📍 D1 · Traslado al site <span class="field-weight">Peso 25%</span></div>
+        <div class="seg-group" id="d1">
+          <span class="seg active-green" data-val="0" onclick="pick('d1',this)">≤30 min</span>
+          <span class="seg" data-val="1" onclick="pick('d1',this)">31–45 min</span>
+          <span class="seg" data-val="2" onclick="pick('d1',this)">46–70 min</span>
+          <span class="seg" data-val="3" onclick="pick('d1',this)">&gt;70 min</span>
+        </div>
+      </div>
+      <div class="field-card">
+        <div class="field-label">🎧 D2 · Experiencia CC <span class="field-weight">Peso 25%</span></div>
+        <div class="seg-group" id="d2">
+          <span class="seg active-green" data-val="0" onclick="pick('d2',this)">CC ventas directo</span>
+          <span class="seg" data-val="1" onclick="pick('d2',this)">CC atención / análogo</span>
+          <span class="seg" data-val="2" onclick="pick('d2',this)">Sin experiencia CC</span>
+        </div>
+      </div>
+      <div class="field-card">
+        <div class="field-label">🎙 D3 · Calidad de roleplay <span class="field-weight">Peso 20%</span></div>
+        <div class="seg-group" id="d3">
+          <span class="seg active-green" data-val="0" onclick="pick('d3',this)">Muy bueno</span>
+          <span class="seg active-green" data-val="0" onclick="pick('d3',this)">Bueno / cerró</span>
+          <span class="seg" data-val="1" onclick="pick('d3',this)">Básico / aceptable</span>
+          <span class="seg" data-val="2" onclick="pick('d3',this)">No cerró venta</span>
+        </div>
+      </div>
+      <div class="field-card">
+        <div class="field-label">💰 D4 · Expectativa salarial <span class="field-weight">Peso 15%</span></div>
+        <div class="seg-group" id="d4">
+          <span class="seg active-green" data-val="0" onclick="pick('d4',this)">≤ $13k/mes</span>
+          <span class="seg" data-val="1" onclick="pick('d4',this)">$14k – $17k/mes</span>
+          <span class="seg" data-val="2" onclick="pick('d4',this)">&gt; $17k/mes</span>
+        </div>
+      </div>
+      <div class="field-card">
+        <div class="field-label">📄 D5 · Documentación <span class="field-weight">Peso 15%</span></div>
+        <div class="seg-group" id="d5">
+          <span class="seg active-green" data-val="0" onclick="pick('d5',this)">Completa</span>
+          <span class="seg" data-val="1" onclick="pick('d5',this)">1 doc pendiente</span>
+          <span class="seg" data-val="2" onclick="pick('d5',this)">Bloqueada</span>
+        </div>
+      </div>
+      <div class="field-card">
+        <div class="field-label">🏢 Site</div>
+        <select id="site">
+          <option value="">Seleccionar site</option>
+          <option>Puebla — Barrio Analco</option>
+          <option>CDMX — Viaducto</option>
+          <option>CDMX — Del Valle</option>
+          <option>Otro</option>
+        </select>
+      </div>
+      <div class="field-card">
+        <div class="field-label">🧑‍💼 Reclutadora</div>
+        <select id="reclutadora">
+          <option value="">Seleccionar reclutadora</option>
+          <option>Grecia Morgado</option>
+          <option>Vanessa Gámez</option>
+          <option>Cynthia Martínez</option>
+          <option>Martin Diego</option>
+          <option>Martha</option>
+          <option>Alejandra</option>
+          <option>Antonia</option>
+          <option>Otra</option>
+        </select>
+      </div>
+      <div class="field-card full">
+        <div class="field-label">📝 Notas adicionales</div>
+        <input type="text" id="notas" placeholder="Ej. Traslado desde Tlaxcala, SAT pendiente, bono corregido...">
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="iro-display">
+        <div class="iro-number" id="iro-num" style="color:#3B6D11">0.0</div>
+        <div class="iro-detail">
+          <div class="iro-lbl">IRO estimado · escala 0–7</div>
+          <div class="iro-nivel" id="iro-nivel" style="color:#3B6D11">Riesgo bajo — incorporar</div>
+          <div class="iro-desc" id="iro-desc">Selecciona las opciones para calcular el IRO del candidato.</div>
+        </div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%;background:#3B6D11"></div></div>
+      <div class="dim-breakdown">
+        <div class="dim-item"><div class="dim-name">D1<br>Traslado</div><div class="dim-score" id="s1" style="color:#3B6D11">0</div><div class="dim-max">/ 3</div></div>
+        <div class="dim-item"><div class="dim-name">D2<br>Exp. CC</div><div class="dim-score" id="s2" style="color:#3B6D11">0</div><div class="dim-max">/ 2</div></div>
+        <div class="dim-item"><div class="dim-name">D3<br>Roleplay</div><div class="dim-score" id="s3" style="color:#3B6D11">0</div><div class="dim-max">/ 2</div></div>
+        <div class="dim-item"><div class="dim-name">D4<br>Exp. sal.</div><div class="dim-score" id="s4" style="color:#3B6D11">0</div><div class="dim-max">/ 2</div></div>
+        <div class="dim-item"><div class="dim-name">D5<br>Docs</div><div class="dim-score" id="s5" style="color:#3B6D11">0</div><div class="dim-max">/ 2</div></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" onclick="guardar()">💾 Guardar candidato</button>
+      <button class="btn" onclick="limpiar()">🔄 Limpiar campos</button>
+    </div>
+
+    <div class="legend-card">
+      <div class="legend-title">Referencia de niveles IRO</div>
+      <div class="legend-grid">
+        <div class="li li-green"><div class="li-label">Bajo · 0.0 – 2.5</div><div>Incorporar sin condiciones</div></div>
+        <div class="li li-amber"><div class="li-label">Medio · 2.6 – 4.5</div><div>Seguimiento activo</div></div>
+        <div class="li li-red"><div class="li-label">Alto · 4.6 – 7.0</div><div>Evaluar antes de avanzar</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PANEL HISTORIAL -->
+  <div class="panel" id="panel-hist">
+
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📋 Candidatos evaluados</div>
+          <div class="card-count" id="hist-count">0 registros</div>
+        </div>
+        <div class="tbl-actions">
+          <button class="btn success" onclick="exportCSV()">⬇ Exportar CSV</button>
+          <button class="btn success" onclick="exportExcel()">⬇ Exportar Excel</button>
+          <button class="btn danger" onclick="borrarTodo()">🗑 Borrar todo</button>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="search-nombre" placeholder="🔍 Buscar por nombre..." oninput="renderHist()">
+        <select id="filter-nivel" onchange="renderHist()">
+          <option value="">Todos los niveles</option>
+          <option value="Bajo">Bajo</option>
+          <option value="Medio">Medio</option>
+          <option value="Alto">Alto</option>
+        </select>
+        <select id="filter-rec" onchange="renderHist()">
+          <option value="">Todas las reclutadoras</option>
+          <option>Grecia Morgado</option>
+          <option>Vanessa Gámez</option>
+          <option>Cynthia Martínez</option>
+          <option>Martin Diego</option>
+          <option>Martha</option>
+          <option>Alejandra</option>
+          <option>Antonia</option>
+        </select>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>IRO</th>
+            <th>Nivel</th>
+            <th>Site</th>
+            <th>Reclutadora</th>
+            <th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th>
+            <th>Fecha</th>
+            <th>Notas</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="hist-tbody"></tbody>
+        </table>
+      </div>
+      <div id="hist-empty" class="empty-state" style="display:none">
+        No hay candidatos guardados aún. Ve a "Calcular" para agregar el primero.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Banco Plata · Calculadora IRO v3.0 · Datos guardados localmente en tu navegador · Junio 2026
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const scores = {d1:0,d2:0,d3:0,d4:0,d5:0};
+const W   = {d1:.25,d2:.25,d3:.20,d4:.15,d5:.15};
+const MAX = {d1:3,d2:2,d3:2,d4:2,d5:2};
+const MAX_W = Object.keys(W).reduce((a,k)=>a+W[k]*MAX[k],0);
+
+let histData = JSON.parse(localStorage.getItem('iro_banco_plata')||'[]');
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='hist'){renderHist();renderStats();}
+}
+
+function showToast(msg, type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+type;
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className='toast',2800);
+}
+
+function pick(dim, el) {
+  document.getElementById(dim).querySelectorAll('.seg').forEach(s=>{
+    s.classList.remove('active-green','active-amber','active-red');
+  });
+  const v=parseInt(el.dataset.val);
+  el.classList.add(v===0?'active-green':v===1?'active-amber':'active-red');
+  scores[dim]=v; calc();
+}
+
+function iroVal() {
+  const raw=Object.keys(scores).reduce((a,k)=>a+scores[k]*W[k],0);
+  return parseFloat((raw/MAX_W*7).toFixed(1));
+}
+
+function meta(iro) {
+  if(iro<=2.5) return{color:'#3B6D11',nivel:'Riesgo bajo — incorporar',
+    desc:'Perfil sólido. Incorporación recomendada sin condiciones adicionales.'};
+  if(iro<=4.5) return{color:'#854F0B',nivel:'Riesgo medio — seguimiento activo',
+    desc:'Incorporable con monitoreo. Verificar factores de riesgo antes del primer día.'};
+  return{color:'#A32D2D',nivel:'Riesgo alto — evaluar con cuidado',
+    desc:'Múltiples factores de riesgo. Considerar acciones correctivas o diferir ingreso.'};
+}
+
+function dimColor(v,max){
+  if(v===0)return'#3B6D11'; if(v/max<=.5)return'#854F0B'; return'#A32D2D';
+}
+
+function calc() {
+  const iro=iroVal(),m=meta(iro);
+  document.getElementById('iro-num').textContent=iro.toFixed(1);
+  document.getElementById('iro-num').style.color=m.color;
+  document.getElementById('iro-nivel').textContent=m.nivel;
+  document.getElementById('iro-nivel').style.color=m.color;
+  document.getElementById('iro-desc').textContent=m.desc;
+  document.getElementById('prog').style.width=Math.round(iro/7*100)+'%';
+  document.getElementById('prog').style.background=m.color;
+  ['d1','d2','d3','d4','d5'].forEach((k,i)=>{
+    const el=document.getElementById('s'+(i+1));
+    el.textContent=scores[k]; el.style.color=dimColor(scores[k],MAX[k]);
+  });
+  const ban=document.getElementById('alert-banner');
+  if(iro>=5){ban.style.display='block';ban.textContent='⚠ IRO alto ('+iro.toFixed(1)+'): revisar traslado, experiencia CC y documentación antes de avanzar.';}
+  else ban.style.display='none';
+}
+
+function guardar() {
+  const nombre=document.getElementById('nombre').value.trim();
+  if(!nombre){showToast('Escribe el nombre del candidato.','error');return;}
+  const iro=iroVal(), m=meta(iro);
+  const nivel=iro<=2.5?'Bajo':iro<=4.5?'Medio':'Alto';
+  const entry={
+    id:Date.now(), nombre,
+    site:document.getElementById('site').value||'—',
+    reclutadora:document.getElementById('reclutadora').value||'—',
+    notas:document.getElementById('notas').value.trim()||'',
+    iro:iro.toFixed(1), nivel, color:m.color,
+    d1:scores.d1,d2:scores.d2,d3:scores.d3,d4:scores.d4,d5:scores.d5,
+    fecha:new Date().toISOString().slice(0,10)
+  };
+  histData.unshift(entry);
+  localStorage.setItem('iro_banco_plata',JSON.stringify(histData));
+  showToast('✓ Candidato guardado','success');
+  limpiar();
+}
+
+function limpiar() {
+  document.getElementById('nombre').value='';
+  document.getElementById('notas').value='';
+  document.getElementById('site').value='';
+  document.getElementById('reclutadora').value='';
+  ['d1','d2','d3','d4','d5'].forEach(dim=>{
+    scores[dim]=0;
+    const grp=document.getElementById(dim);
+    grp.querySelectorAll('.seg').forEach(s=>s.classList.remove('active-green','active-amber','active-red'));
+    grp.querySelector('.seg').classList.add('active-green');
+  });
+  calc();
+}
+
+function getFiltered() {
+  const q=(document.getElementById('search-nombre').value||'').toLowerCase();
+  const fn=document.getElementById('filter-nivel').value;
+  const fr=document.getElementById('filter-rec').value;
+  return histData.filter(h=>
+    (!q||h.nombre.toLowerCase().includes(q))&&
+    (!fn||h.nivel===fn)&&
+    (!fr||h.reclutadora===fr)
+  );
+}
+
+function renderHist() {
+  const rows=getFiltered();
+  document.getElementById('hist-count').textContent=rows.length+' de '+histData.length+' registro'+(histData.length!==1?'s':'');
+  const tbody=document.getElementById('hist-tbody');
+  const empty=document.getElementById('hist-empty');
+  if(!histData.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const badgeClass=n=>n==='Bajo'?'b-green':n==='Medio'?'b-amber':'b-red';
+  tbody.innerHTML=rows.map((h,i)=>`
+    <tr onclick="cargar(${histData.indexOf(h)})">
+      <td style="color:#888780;font-size:11px">${histData.indexOf(h)+1}</td>
+      <td style="font-weight:600">${h.nombre}</td>
+      <td class="iro-cell" style="color:${h.color}">${h.iro}</td>
+      <td><span class="badge ${badgeClass(h.nivel)}">${h.nivel}</span></td>
+      <td style="font-size:11px;color:#5F5E5A">${h.site}</td>
+      <td style="font-size:11px;color:#5F5E5A">${h.reclutadora}</td>
+      <td style="text-align:center;color:${dimColor(h.d1,3)};font-weight:700">${h.d1}</td>
+      <td style="text-align:center;color:${dimColor(h.d2,2)};font-weight:700">${h.d2}</td>
+      <td style="text-align:center;color:${dimColor(h.d3,2)};font-weight:700">${h.d3}</td>
+      <td style="text-align:center;color:${dimColor(h.d4,2)};font-weight:700">${h.d4}</td>
+      <td style="text-align:center;color:${dimColor(h.d5,2)};font-weight:700">${h.d5}</td>
+      <td style="font-size:11px;color:#888780;white-space:nowrap">${h.fecha}</td>
+      <td style="font-size:11px;color:#5F5E5A;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${h.notas}">${h.notas||'—'}</td>
+      <td><button class="del-btn" onclick="event.stopPropagation();borrar(${histData.indexOf(h)})" title="Eliminar">✕</button></td>
+    </tr>`).join('');
+}
+
+function renderStats() {
+  const total=histData.length;
+  const bajo=histData.filter(h=>h.nivel==='Bajo').length;
+  const medio=histData.filter(h=>h.nivel==='Medio').length;
+  const alto=histData.filter(h=>h.nivel==='Alto').length;
+  const prom=total?( histData.reduce((a,h)=>a+parseFloat(h.iro),0)/total).toFixed(1):'—';
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card"><div class="stat-val" style="color:#185FA5">${total}</div><div class="stat-label">Total evaluados</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#3B6D11">${bajo}</div><div class="stat-label">Riesgo bajo</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#854F0B">${medio}</div><div class="stat-label">Riesgo medio</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#A32D2D">${alto}</div><div class="stat-label">Riesgo alto</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#1B3A6B">${prom}</div><div class="stat-label">IRO promedio</div></div>
+  `;
+}
+
+function cargar(i) {
+  const h=histData[i];
+  document.getElementById('nombre').value=h.nombre;
+  document.getElementById('notas').value=h.notas||'';
+  document.getElementById('site').value=h.site==='—'?'':h.site;
+  document.getElementById('reclutadora').value=h.reclutadora==='—'?'':h.reclutadora;
+  ['d1','d2','d3','d4','d5'].forEach(dim=>{
+    const grp=document.getElementById(dim);
+    grp.querySelectorAll('.seg').forEach(s=>s.classList.remove('active-green','active-amber','active-red'));
+    scores[dim]=h[dim];
+    const match=[...grp.querySelectorAll('.seg')].filter(s=>parseInt(s.dataset.val)===h[dim]);
+    if(match.length) match[match.length-1].classList.add(h[dim]===0?'active-green':h[dim]===1?'active-amber':'active-red');
+  });
+  calc();
+  switchTabDirect('calc');
+  window.scrollTo({top:0,behavior:'smooth'});
+  showToast('Candidato cargado para editar');
+}
+
+function switchTabDirect(tab) {
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active', (tab==='calc'&&i===0)||(tab==='hist'&&i===1));
+  });
+  document.getElementById('panel-calc').classList.toggle('active',tab==='calc');
+  document.getElementById('panel-hist').classList.toggle('active',tab==='hist');
+}
+
+function borrar(i) {
+  if(!confirm('¿Eliminar a '+histData[i].nombre+'?')) return;
+  histData.splice(i,1);
+  localStorage.setItem('iro_banco_plata',JSON.stringify(histData));
+  renderHist(); renderStats();
+  showToast('Candidato eliminado');
+}
+
+function borrarTodo() {
+  if(!confirm('¿Borrar TODOS los candidatos? Esta acción no se puede deshacer.')) return;
+  histData=[];
+  localStorage.setItem('iro_banco_plata','[]');
+  renderHist(); renderStats();
+  showToast('Historial borrado');
+}
+
+function exportCSV() {
+  if(!histData.length){showToast('No hay datos para exportar.','error');return;}
+  const header='Nombre,Site,Reclutadora,IRO,Nivel,D1 Traslado,D2 Exp CC,D3 Roleplay,D4 Exp Sal,D5 Docs,Fecha,Notas';
+  const rows=histData.map(h=>[
+    '"'+h.nombre+'"','"'+h.site+'"','"'+h.reclutadora+'"',
+    h.iro,'"'+h.nivel+'"',h.d1,h.d2,h.d3,h.d4,h.d5,
+    '"'+h.fecha+'"','"'+(h.notas||'')+'"'
+  ].join(','));
+  const csv=header+'\n'+rows.join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='IRO_BancoPlata_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('✓ CSV exportado','success');
+}
+
+function exportExcel() {
+  if(!histData.length){showToast('No hay datos para exportar.','error');return;}
+  let html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
+  html+='<head><meta charset="UTF-8"><style>';
+  html+='th{background:#1B3A6B;color:#fff;font-weight:bold;padding:8px;}';
+  html+='td{padding:6px 10px;border:1px solid #E0DDD8;}';
+  html+='.bajo{background:#EAF3DE;color:#27500A;font-weight:bold;}';
+  html+='.medio{background:#FAEEDA;color:#633806;font-weight:bold;}';
+  html+='.alto{background:#FCEBEB;color:#791F1F;font-weight:bold;}';
+  html+='</style></head><body><table>';
+  html+='<tr><th>Nombre</th><th>Site</th><th>Reclutadora</th><th>IRO</th><th>Nivel</th><th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th><th>Fecha</th><th>Notas</th></tr>';
+  histData.forEach(h=>{
+    const cls=h.nivel==='Bajo'?'bajo':h.nivel==='Medio'?'medio':'alto';
+    html+=`<tr><td>${h.nombre}</td><td>${h.site}</td><td>${h.reclutadora}</td>`;
+    html+=`<td class="${cls}">${h.iro}</td><td class="${cls}">${h.nivel}</td>`;
+    html+=`<td>${h.d1}</td><td>${h.d2}</td><td>${h.d3}</td><td>${h.d4}</td><td>${h.d5}</td>`;
+    html+=`<td>${h.fecha}</td><td>${h.notas||''}</td></tr>`;
+  });
+  html+='</table></body></html>';
+  const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='IRO_BancoPlata_'+new Date().toISOString().slice(0,10)+'.xls';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('✓ Excel exportado','success');
+}
+
+calc();
+</script>
+</body>
+</html>
